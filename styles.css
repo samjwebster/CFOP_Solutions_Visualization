@@ -10,6 +10,10 @@ body {
     --rubiksyellow: #D3C98E;
     --rubiksorange: #CDA884;
     --rubikswhite: #F6F3E0;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     
 }
 
@@ -19,22 +23,28 @@ body {
     align-items: center;
     padding: 0;
     margin: 10;
-    width: 100%;
+    width: max-content;
     height: 100%;
 }
 
-#header {
+.cell {
+    background: #ede8d0;
+    border-radius: 10px;
+    
+    width: 100%;
+    padding: 2%;
+    margin: 1%;
+
+    border-style: outset;
+    border-width: 0.25em;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2vh;
+}
 
-    background: #ede8d0;
-    border-radius: 10px;
-
-    width: max-content;
-
-    border: var(--rubiksred) outset 0.25em;
+#header {
+    border-color: var(--rubiksred);
 }
 
 #header > h1,h2  {
@@ -43,4 +53,16 @@ body {
     margin: 0px;
     /* border: solid red; */
     color: #191922;
+}
+
+#tsne-plot {
+    border-color: var(--rubiksblue);
+}
+
+#move-freq {
+    border-color: var(--rubiksgreen);
+}
+
+#move-heatmap {
+    border-color: var(--rubiksyellow);
 }

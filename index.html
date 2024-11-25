@@ -11,9 +11,24 @@
         <div id="background-animation" style="min-width: 100w; min-height: 100h; margin: 0px; padding: 0px; z-index: -10;"></div>
         
         <div id="vis-content">
-            <div id="header">
+            <div id="header" class="cell">
                 <h1>Rubik's Cube CFOP Solutions</h1>
                 <h2>Sam Webster and Tram Trinh</h2>
+            </div>
+
+            <div id="tsne-plot" class="cell">
+                <h3>2D t-SNE Plot of CFOP Solutions</h3>
+                <div id="tsne-plot-svg"></div>
+            </div>
+
+            <div id="move-freq" class="cell">
+                <h3>Move Frequency Analysis</h3>
+                <div id="move-freq-svg"></div>
+            </div>  
+
+            <div id="move-heatmap" class="cell">
+                <h3>Heatmap of Cube Manipulation</h3>
+                <div id="move-heatmap-svg"></div>
             </div>
 
         </div>
