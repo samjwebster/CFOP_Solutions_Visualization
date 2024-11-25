@@ -3,6 +3,24 @@
 body {
     background: #ede8d0;
     font-family: Figtree, sans-serif;
+
+    --rubiksred: #CC938B;
+    --rubiksblue: #98ACB8;
+    --rubiksgreen: #9AC190;
+    --rubiksyellow: #D3C98E;
+    --rubiksorange: #CDA884;
+    --rubikswhite: #F6F3E0;
+    
+}
+
+#vis-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    margin: 10;
+    width: 100%;
+    height: 100%;
 }
 
 #header {
@@ -11,14 +29,18 @@ body {
     align-items: center;
     padding: 2vh;
 
-    background: rgba(76, 175, 80, 0.3);
+    background: #ede8d0;
     border-radius: 10px;
+
+    width: max-content;
+
+    border: var(--rubiksred) outset 0.25em;
 }
 
 #header > h1,h2  {
     text-align: center;
     padding: 1vh;
     margin: 0px;
-    border: solid red;
+    /* border: solid red; */
     color: #191922;
 }
