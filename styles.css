@@ -14,55 +14,170 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    
 }
 
 #vis-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0;
-    margin: 10;
-    width: max-content;
-    height: 100%;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .cell {
-    background: #ede8d0;
+    background: #fffcf5;
     border-radius: 10px;
-    
     width: 100%;
     padding: 2%;
     margin: 1%;
-
     border-style: outset;
     border-width: 0.25em;
-
     display: flex;
     flex-direction: column;
     align-items: center;
+    font-size: 1.50rem;
+    overflow-x: auto;
 }
+
 
 #header {
     border-color: var(--rubiksred);
 }
 
-#header > h1,h2  {
+#header > h1, h2 {
     text-align: center;
-    padding: 1vh;
     margin: 0px;
-    /* border: solid red; */
     color: #191922;
 }
 
-#tsne-plot {
-    border-color: var(--rubiksblue);
+#move-notation {
+    border-color: var(--rubiksorange);
 }
 
 #move-freq {
     border-color: var(--rubiksgreen);
 }
 
-#move-heatmap {
+#common-sequences {
+    border-color: var(--rubiksblue);
+}
+
+#cfop-distribution {
     border-color: var(--rubiksyellow);
+}
+
+/* Move Notation Grid */
+.move-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 15px 0;
+}
+
+.move-block {
+    text-align: center;
+    flex-basis: calc(100% / 6);
+    max-width: 170px;
+    flex-shrink: 0;
+}
+
+.move-block img {
+    width: 130px;
+    height: 130px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    filter: saturate(0.75);
+    transition: filter 0.2s; 
+}
+
+.move-block p {
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* Flex container for charts */
+.charts-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 0;
+}
+
+/* Chart container with individual titles */
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%; /* Full width of parent */
+    max-width: 100%; /* Prevents breaking the layout */
+    flex-grow: 1; /* Ensures charts scale properly */
+}
+
+.chart-container h4 {
+    font-family: Figtree, sans-serif;
+    font-size: 1.25rem;
+    margin-bottom: 10px;
+    color: #32493b;
+}
+
+/* Axis labels bold */
+.axis-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    font-family: Figtree, sans-serif; 
+}
+
+/* CFOP Phase Analysis */
+.chart-and-images {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 100px;
+}
+
+.cfop-images {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.phase-step {
+    text-align: center;
+}
+
+.phase-step h5 {
+    font-family: Figtree, sans-serif;
+    font-size: 15px;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.step-images {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.step-images img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    filter: saturate(0.75);
+    transition: filter 0.2s; 
+}
+
+.step-images span {
+    font-size: 24px;
+    color: #333;
 }
