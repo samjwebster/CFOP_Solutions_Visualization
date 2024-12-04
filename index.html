@@ -19,6 +19,26 @@
             <section id="tsne-plot" class="cell">
                 <h3>2D t-SNE Plot of CFOP Solutions</h3>
                 <div id="tsne-plot-svg"></div>
+
+                <div style="display: flex; flex-direction: flex-row;">
+                    <span style="margin-right: 10px;">Number of Solutions:</span> 
+                    <select name="tsne-select" id="tsne-select">
+                        <option value="50" checked=true>50</option>
+                        <option value="250">250</option>
+                        <option value="1000">1000</option>
+                    </select>
+                    <span style="margin-left: 20px; margin-right: 10px;">Coloring:</span> 
+                    <select name="coloring-select" id="coloring-select">
+                        <option value="solvedness" checked=true>Solvedness</option>
+                        <option value="phase">Phase</option>
+                    </select>
+                    <span style="margin-left: 20px; margin-right: 10px;">Visualization:</span> 
+                    <select name="visualization-select" id="visualization-select">
+                        <option value="scatterplot" checked=true>Scatterplot</option>
+                        <option value="voronoi">Voronoi Diagram</option>
+                    </select>
+                </div>
+                
             </section>
 
             <section id="move-notation" class="cell">
