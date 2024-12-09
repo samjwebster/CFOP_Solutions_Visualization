@@ -930,7 +930,7 @@ function renderTSNEVoronoi(selector, data, n_solutions, coloring) {
             tooltip.html(`Solvedness: ${(d.data.solvedness*100).toFixed(2)}%<br>Phase: ${phase}`)
                 .style("visibility", "visible");
             const container = tooltip.append("div");
-            renderCubeVisualization(d.faces, container);
+            renderCubeVisualization(d.data.faces, container);
         })
         .on("mousemove", (event) => {
             tooltip.style("top", `${event.pageY - 30}px`)
