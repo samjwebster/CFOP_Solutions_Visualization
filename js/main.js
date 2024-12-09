@@ -27,6 +27,7 @@ const moveDescription = [
     { move: "B2", description: "Rotate the back face 180°" },
     { move: "D2", description: "Rotate the down face 180°" }
 ];
+
 const tooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("position", "absolute")
@@ -37,6 +38,91 @@ const tooltip = d3.select("body").append("div")
     .style("pointer-events", "none")
     .style("font-size", "12px")
     .style("visibility", "hidden");
+
+// Parse cube state
+function parseCubeState(state) {
+    const stateData = JSON.parse(state)
+    const faces = [];
+    const faceData = stateData.slice(0, 54); // Take the first 54 elements
+    for (let i = 0; i < 6; i++) {
+        faces.push(faceData.slice(i * 9, (i + 1) * 9)); // Extract 9 elements for each face
+    }
+    return faces;
+}
+
+// Render cube visualization in tooltip
+function renderCubeVisualization(faces, container) {
+    // Clear previous content
+    container.html("");
+
+    const faceMap = {
+        "U": faces[1], // Upper face
+        "L": faces[0], // Left face
+        "F": faces[2], // Front face
+        "R": faces[4], // Right face
+        "B": faces[5], // Back face
+        "D": faces[3], // Down face
+    };
+
+    const colorMap = {
+        0: "red",
+        1: "yellow",
+        2: "green",
+        3: "white",
+        4: "orange",
+        5: "blue",
+    };
+
+    const layout = [
+        ["", "U", "", ""],
+        ["L", "F", "R", "B"],
+        ["", "D", "", ""],
+    ];
+
+    const table = container.append("table")
+        .style("border-spacing", "5px")
+        .style("margin", "auto")
+        .style("table-layout", "fixed");
+
+    layout.forEach(row => {
+        const tableRow = table.append("tr");
+        row.forEach(cell => {
+            const tableCell = tableRow.append("td");
+            if (cell === "") {
+                tableCell.style("width", "60px").style("height", "60px");
+            } else {
+                const face = faceMap[cell];
+                const faceTable = tableCell.append("table")
+                    .style("border-spacing", "1px")
+                    .style("margin", "auto")
+                    .style("table-layout", "fixed");
+                
+                for (let i = 0; i < 3; i++) {
+                    const faceRow = faceTable.append("tr");
+                    for (let j = 0; j < 3; j++) {
+                        const cellElement = faceRow.append("td")
+                            .style("width", "15px")
+                            .style("height", "15px")
+                            .style("background-color", colorMap[face[i * 3 + j]])
+                            .style("border", "1px solid #000");
+
+                        // Add face label in the middle cell
+                        if (i === 1 && j === 1) { 
+                            cellElement
+                                .append("div")
+                                .style("text-align", "center")
+                                .style("font-size", "10px")
+                                .style("font-weight", "bold")
+                                .style("color", "black") 
+                                .text(cell); 
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
+
 
 // Fetch and visualize data
 Promise.all([
@@ -66,7 +152,8 @@ d3.csv(tsne_50_solutionsPath).then(data => {
         y: +d.y,
         solvedness: +d.solvedness,
         norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-        phase: d.state.split(",")[d.state.split(",").length - 1][1]
+        phase: d.state.split(",")[d.state.split(",").length - 1][1],
+        faces: parseCubeState(d.state)
     }));
     renderTSNE("#tsne-plot-svg", tsneData, "50", "solvedness");
 });
@@ -96,7 +183,8 @@ d3.select("#tsne-select").on("change", function () {
             y: +d.y,
             solvedness: +d.solvedness,
             norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-            phase: d.state.split(",")[d.state.split(",").length - 1][1]
+            phase: d.state.split(",")[d.state.split(",").length - 1][1],
+            faces: parseCubeState(d.state)
         }));
         if(visualizationType === "scatterplot") {
             renderTSNE("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
@@ -131,7 +219,8 @@ d3.select("#coloring-select").on("change", function () {
             y: +d.y,
             solvedness: +d.solvedness,
             norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-            phase: d.state.split(",")[d.state.split(",").length - 1][1]
+            phase: d.state.split(",")[d.state.split(",").length - 1][1],
+            faces: parseCubeState(d.state)
         }));
         if(visualizationType === "scatterplot") {
             renderTSNE("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
@@ -165,7 +254,8 @@ d3.select("#visualization-select").on("change", function () {
             y: +d.y,
             solvedness: +d.solvedness,
             norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-            phase: d.state.split(",")[d.state.split(",").length - 1][1]
+            phase: d.state.split(",")[d.state.split(",").length - 1][1],
+            faces: parseCubeState(d.state)
         }));
         if(selectedVisiualization === "scatterplot") {
             renderTSNE("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
@@ -597,6 +687,8 @@ function renderTSNE(selector, data, n_solutions, coloring="solvedness") {
             }
             tooltip.html(`Solvedness: ${(d.solvedness*100).toFixed(2)}%<br>Phase: ${phase}`)
                 .style("visibility", "visible");
+            const container = tooltip.append("div");
+            renderCubeVisualization(d.faces, container);
         })
         .on("mousemove", (event) => {
             tooltip.style("top", `${event.pageY - 30}px`)
@@ -837,6 +929,8 @@ function renderTSNEVoronoi(selector, data, n_solutions, coloring) {
             }
             tooltip.html(`Solvedness: ${(d.data.solvedness*100).toFixed(2)}%<br>Phase: ${phase}`)
                 .style("visibility", "visible");
+            const container = tooltip.append("div");
+            renderCubeVisualization(d.faces, container);
         })
         .on("mousemove", (event) => {
             tooltip.style("top", `${event.pageY - 30}px`)
