@@ -7,6 +7,8 @@ const tsne_50_solutionsPath = "data/tsne/tsne_50_solutions.csv";
 const tsne_250_solutionsPath = "data/tsne/tsne_250_solutions.csv";
 const tsne_1000_solutionsPath = "data/tsne/tsne_1000_solutions.csv";
 
+const cubeHeatmapPath = "data/cube_heatmap.json";
+
 const moveDescription = [
     { move: "F", description: "Rotate the front face 90° clockwise" },
     { move: "R", description: "Rotate the right face 90° clockwise" },
@@ -40,8 +42,9 @@ const tooltip = d3.select("body").append("div")
     .style("visibility", "hidden");
 
 // Parse cube state
-function parseCubeState(state) {
-    const stateData = JSON.parse(state)
+function parseCubeState(state, json=true) {
+    const stateData = json ? JSON.parse(state) : state;
+
     const faces = [];
     const faceData = stateData.slice(0, 54); // Take the first 54 elements
     for (let i = 0; i < 6; i++) {
@@ -264,8 +267,6 @@ d3.select("#visualization-select").on("change", function () {
         }
     });
 });
-
-
 
 // Render move notation images
 function renderMoveNotation(selector) {
@@ -1084,4 +1085,184 @@ function renderTSNEVoronoi(selector, data, n_solutions, coloring) {
                 .text(`${phase}`);
         });
     }
+}
+
+// Cube heatmap
+d3.json(cubeHeatmapPath).then((data) => {
+    // combine the data for all phases
+
+
+    allData = Array(54).fill(0);
+    for (let phase in data) {
+        allData = allData.map((val, i) => val + data[phase][i]);
+    }
+
+
+    // Render the cube heatmap
+    renderHeatmap("#move-heatmap-svg", allData);
+})
+
+// Event listeners for the move heatmap checkboxes
+// These determine which phases to count in the heatmap creation
+d3.selectAll(".move-checkbox").on("change", function () {
+    const checkedBoxes = d3.selectAll(".move-checkbox").nodes().filter(d => d.checked);
+    const selectedPhases = checkedBoxes.map(d => d.value);
+
+    // console.log(selectedPhases);
+
+    // convert selected phases to numbers: "cross" -> 1, "f2l" -> 2, etc.
+    const selectedPhasesNumbers = selectedPhases.map(phase => {
+        if (phase === "cross") return 1;
+        if (phase === "f2l") return 2;
+        if (phase === "oll") return 3;
+        if (phase === "pll") return 4;
+    });
+
+    // console.log(selectedPhasesNumbers)
+
+    d3.json(cubeHeatmapPath).then((data) => {
+        let allData = Array(54).fill(0)
+        selectedPhasesNumbers.forEach(phase => {
+            allData = allData.map((val, i) => val + data[phase][i]);
+        });
+        renderHeatmap("#move-heatmap-svg", allData);
+    })
+});
+
+function renderHeatmap(selector, data) {
+    // Heatmap should show the cube layout and color each square according to the number of times it was changed
+
+    d3.select(selector).selectAll("*").remove();
+
+    const svgWidth = 400;
+    const svgHeight = 300;
+
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const width = svgWidth - margin.left - margin.right;
+    const height = svgHeight - margin.top - margin.bottom;
+
+    const svg = d3.select(selector).append("svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
+
+    const maxCount = d3.max(data);
+
+    let faces = parseCubeState(data, false);
+
+    const faceMap = {
+        "U": faces[1], // Upper face
+        "L": faces[0], // Left face
+        "F": faces[2], // Front face
+        "R": faces[4], // Right face
+        "B": faces[5], // Back face
+        "D": faces[3], // Down face
+    };
+
+    const face2id = {
+        "U": 1,
+        "L": 0,
+        "F": 2,
+        "R": 4,
+        "B": 5,
+        "D": 3,
+    }
+
+    const colorMap = {
+        0: "red",
+        1: "yellow",
+        2: "green",
+        3: "white",
+        4: "orange",
+        5: "blue",
+    };
+
+    const layout = [
+        ["", "U", "", ""],
+        ["L", "F", "R", "B"],
+        ["", "D", "", ""],
+    ];
+
+    const table = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Add black background beneath the cube visualization
+    table.append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "black")
+        .attr("rx", 10)  
+        .attr("ry", 10);
+
+    layout.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+            if (cell !== "") {
+                const face = faceMap[cell];
+                const faceCol = colorMap[face2id[cell]];
+                const faceGroup = table.append("g")
+                    .attr("transform", `translate(${30 + colIndex * 75},${15 + rowIndex * 75})`);
+
+                face.forEach((value, index) => {
+                    const x = (index % 3) * 25;
+                    const y = Math.floor(index / 3) * 25;
+                    const opacity = value / maxCount;
+
+                    let curr_class = index === 4 ? "center" : "noncenter";
+
+                    if(value === 0) {
+                        faceGroup.append("rect")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("width", 25)
+                            .attr("height", 25)
+                            .attr("fill", null)
+                            .attr("opacity", "100")
+                            .attr("stroke", faceCol)
+                            .style("stroke-dasharray", ("3, 3"))
+                            .classed(curr_class, true);        
+                    } else {
+                        faceGroup.append("rect")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("width", 25)
+                            .attr("height", 25)
+                            .attr("fill", faceCol)
+                            .attr("opacity", opacity)
+                            .attr("stroke", null)
+                            .classed(curr_class, true);        
+                    }   
+                });
+            }
+        });
+    });
+
+    // Tooltip
+    let totalSum = d3.sum(data);
+    table.selectAll(".noncenter")
+        .on("mouseover", (event, d) => {
+            const color = event.target.getAttribute("fill");
+            const opacity = event.target.getAttribute("opacity");
+            let countN = Math.round(opacity * maxCount)
+            const count = d3.format(",")(countN);
+            const percentage = countN > 0 ? d3.format(".2%")(countN / totalSum) : "0%";
+            const text = `Count: ${count}<br>Percentage: ${percentage}`;
+            tooltip.html(text)
+                .style("visibility", "visible");
+        })
+        .on("mousemove", (event) => {
+            tooltip.style("top", `${event.pageY - 30}px`)
+                .style("left", `${event.pageX + 10}px`);
+        })
+        .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+        });
+
+}
+
+function toTitleCase(str) {
+    return str.replace(
+        /\w\S*/g,
+        text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+    );
 }
