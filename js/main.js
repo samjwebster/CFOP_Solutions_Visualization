@@ -1230,7 +1230,8 @@ function renderHeatmap(selector, data) {
                             .attr("fill", faceCol)
                             .attr("opacity", opacity)
                             .attr("stroke", null)
-                            .classed(curr_class, true);        
+                            .classed(curr_class, true)    
+                            .attr("data-value", value);
                     }   
                 });
             }
@@ -1243,7 +1244,7 @@ function renderHeatmap(selector, data) {
         .on("mouseover", (event, d) => {
             const color = event.target.getAttribute("fill");
             const opacity = event.target.getAttribute("opacity");
-            let countN = Math.round(opacity * maxCount)
+            let countN = event.target.getAttribute("data-value");
             const count = d3.format(",")(countN);
             const percentage = countN > 0 ? d3.format(".2%")(countN / totalSum) : "0%";
             const text = `Count: ${count}<br>Percentage: ${percentage}`;
