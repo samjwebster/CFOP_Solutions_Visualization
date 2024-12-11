@@ -133,13 +133,17 @@ Promise.all([
     d3.json(commonSequencesPath),
     d3.json(cfopDistributionPath),
 ]).then(([moveFrequencyData, commonSequencesData, cfopDistributionData]) => {
-    // Load data for the first training file (`training.0`)
-    const moveFrequency = moveFrequencyData["training.0"] || {};
-    const commonSequences = commonSequencesData["training.0"] || {};
-    const cfopDistribution = cfopDistributionData["training.0"] || {};
+    const moveFrequency = moveFrequencyData["data"] || {};
+    const commonSequences = commonSequencesData["data"].reduce((acc, item) => {
+        acc[item.sequence.join(" ")] = item.count;
+        return acc;
+    }, {});
+    const cfopDistribution = Object.entries(cfopDistributionData["data"]).map(([phase, moves]) => ({
+        phase,
+        ...moves,
+    }));
     // Render move notation images
     renderMoveNotation("#move-images-section");
-
     // Render charts
     renderBarChart("#move-frequency-svg", moveFrequency, "Move", "Count");
     renderBarChart("#common-sequences-svg", transformSequenceData(commonSequences), "Sequence", "Count", true);
@@ -292,14 +296,14 @@ function renderMoveNotation(selector) {
         `);
 }
 
-// Transform sequence data into a format suitable for rendering
 function transformSequenceData(data) {
     const transformed = {};
-    data.forEach(({ sequence, count }) => {
-        transformed[sequence.join(" ")] = count;
+    Object.entries(data).forEach(([sequence, count]) => {
+        transformed[sequence] = count;
     });
     return transformed;
 }
+
 
 // Render bar chart
 function renderBarChart(selector, data, xLabel, yLabel, isSequence = false) {
@@ -342,10 +346,22 @@ function renderBarChart(selector, data, xLabel, yLabel, isSequence = false) {
         .attr("ry", 3) 
         .attr("fill", barColor)
         .on("mouseover", (event, d) => {
+            let imagesHTML = "";
+            const moves = d[0].split(" ");
+            moves.forEach(move => {
+                const imagePath = `assets/moves/${move}.png`;
+                imagesHTML += `<img src="${imagePath}" alt="${move} image" style="width: 50px; height: 50px; margin: 2px;">`;
+            });
+
             const moveInfo = moveDescription.find(m => m.move === d[0]);
             const description = moveInfo && moveInfo.description ? `: ${moveInfo.description}` : "";
-            tooltip.html(`<strong>${d[0]}</strong>${description}<br>Count: ${d[1]}`)
-                .style("visibility", "visible");
+
+            tooltip.html(`
+                <strong>${d[0]}</strong>${description}<br>
+                Count: ${d[1]}<br>
+                ${imagesHTML}
+            `)
+            .style("visibility", "visible");
         })
         .on("mousemove", (event) => {
             tooltip.style("top", `${event.pageY - 30}px`)
@@ -407,7 +423,8 @@ function renderStackedBarChart(selector, data) {
     const chart = svg.append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const keys = Object.keys(data[Object.keys(data)[0]]);
+    const keys = Object.keys(data[0]).filter(key => key !== "phase");
+
     const xKeys = Object.keys(data);
     const customXLabels = {
         "cross": "Cross",
@@ -449,10 +466,14 @@ function renderStackedBarChart(selector, data) {
                 .attr("height", d => yScale(d[0]) - yScale(d[1]))
                 .attr("width", xScale.bandwidth())
                 .on("mouseover", function (event, d) {
-                    const key = layer.key; // Access key directly from layer
-                    tooltip.html(`<strong>${key}</strong>: ${d[1] - d[0]}`)
-                        .style("visibility", "visible");
-                })
+                    const key = layer.key; 
+                    const imagePath = `assets/moves/${key}.png`; 
+                    tooltip.html(`
+                        <strong>${key}</strong>: ${d[1] - d[0]}<br>
+                        <img src="${imagePath}" alt="${key} image" style="width: 50px; height: 50px; margin-top: 5px;">
+                    `)
+                    .style("visibility", "visible");
+                    })
                 .on("mousemove", (event) => {
                     tooltip.style("top", `${event.pageY - 30}px`)
                         .style("left", `${event.pageX + 10}px`);
@@ -500,18 +521,17 @@ function renderStackedBarChart(selector, data) {
     // Add legend
     const legend = svg.append("g")
         .attr("transform", `translate(${width + margin.right}, ${margin.top})`);
-
     keys.forEach((key, i) => {
         const legendRow = legend.append("g")
             .attr("transform", `translate(0, ${i * 20})`);
-
+    
         legendRow.append("rect")
             .attr("width", 12)
             .attr("height", 12)
             .attr("fill", colorScale(key))
             .attr("rx", 2)
             .attr("ry", 2);
-
+    
         legendRow.append("text")
             .attr("x", 20)
             .attr("y", 10)

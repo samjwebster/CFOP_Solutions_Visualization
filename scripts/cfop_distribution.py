@@ -156,17 +156,14 @@ def process_all_files(folder_path):
     Process all solution files in the folder and aggregate move counts.
     """
     aggregated_counts = {}
-
+    aggregated_counts["data"] = defaultdict(lambda: defaultdict(int))
     for filename in os.listdir(folder_path):
         if filename.startswith("training.seq."):
-            training_file = f"training.{filename.split('.')[-1]}"
-            aggregated_counts[training_file] = defaultdict(lambda: defaultdict(int))
             filepath = os.path.join(folder_path, filename)
             file_counts = parse_solution_file(filepath)
-
             for phase, moves in file_counts.items():
                 for move, count in moves.items():
-                    aggregated_counts[training_file][phase][move] += count
+                    aggregated_counts["data"][phase][move] += count
 
     return aggregated_counts
 
@@ -176,7 +173,7 @@ def save_to_json(data, output_file):
     Save the aggregated move counts to a JSON file.
     """
     with open(output_file, 'w') as file:
-        json.dump(data, file, indent=4)
+        json.dump(data, file)
 
 
 if __name__ == "__main__":
