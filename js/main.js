@@ -126,49 +126,74 @@ function renderCubeVisualization(faces, container) {
     });
 }
 
+function onButtonClick(buttonId) {
+    button_ids = ["displayTSNE", "displayFreqSeq", "displayPhase", "displayHeatmap", "displayNotation"];
+    options_ids = [
+        ["displayTSNE", "tsne-options"], 
+        ["displayFreqSeq", "freq-seq-svgs"],
+        ["displayPhase", "phase-svgs"],
+        ["displayHeatmap", "heatmap-options"],
+    ]
 
-// Fetch and visualize data
-Promise.all([
-    d3.json(moveFrequencyPath),
-    d3.json(commonSequencesPath),
-    d3.json(cfopDistributionPath),
-]).then(([moveFrequencyData, commonSequencesData, cfopDistributionData]) => {
-    const moveFrequency = moveFrequencyData["data"] || {};
-    const commonSequences = commonSequencesData["data"].reduce((acc, item) => {
-        acc[item.sequence.join(" ")] = item.count;
-        return acc;
-    }, {});
-    const cfopDistribution = Object.entries(cfopDistributionData["data"]).map(([phase, moves]) => ({
-        phase,
-        ...moves,
-    }));
-    // Render move notation images
-    renderMoveNotation("#move-images-section");
-    // Render charts
-    renderBarChart("#move-frequency-svg", moveFrequency, "Move", "Count");
-    renderBarChart("#common-sequences-svg", transformSequenceData(commonSequences), "Sequence", "Count", true);
-    renderStackedBarChart("#cfop-phase-svg", cfopDistribution);
-    renderCFOPImages("#cfop-images")
-});
+    // Correctly color buttons based on what's selected
+    button_ids.forEach(bId => {
+        if(bId == buttonId) {
+            d3.select("#" + bId).style("background-color", "#9AC190").style("border-color", "#5b8d4f");
+        } else {
+            d3.select("#" + bId).style("background-color", "#fff").style("border-color", "#000");
+        }
+    });
 
-// Instantiate tSNE visualization with 50 solution data
-d3.csv(tsne_50_solutionsPath).then(data => {
-    let minSolvedness = d3.min(data, d => +d.solvedness);
-    const tsneData = data.map(d => ({
-        x: +d.x,
-        y: +d.y,
-        solvedness: +d.solvedness,
-        norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-        phase: d.state.split(",")[d.state.split(",").length - 1][1],
-        faces: parseCubeState(d.state)
-    }));
-    renderTSNE("#tsne-plot-svg", tsneData, "50", "solvedness");
-});
+    // Correctly reveal or hide options as needed
+    options_ids.forEach(pair => {
+        let bId = pair[0];
+        let oId = pair[1]
+        if(bId == buttonId) {
+            d3.select("#" + oId).style("display", "flex");
+        } else {
+            d3.select("#" + oId).style("display", "none");
+        }
+    });
 
-// Listen for when new t-SNE data is selected
-d3.select("#tsne-select").on("change", function () {
-    const selectedValue = this.value;
-    let tsnePath = "";
+    // Clear the main visualization
+    d3.select("#main-visualization-svg").selectAll("*").remove();
+
+    //... displaying code...
+    if (buttonId === "displayTSNE") {
+        d3.select("#main-vis-title").text("2D t-SNE Plot of CFOP Solutions");
+        loadAndRenderTSNE();
+    } else if (buttonId === "displayFreqSeq") {
+        d3.select("#main-vis-title").text("Move Frequency and Sequence Analysis");
+        loadAndRenderFreqSeq();
+    } else if (buttonId === "displayPhase") {
+        d3.select("#main-vis-title").text("CFOP Phase Analysis");
+        loadAndRenderPhaseAnalysis();
+    } else if (buttonId === "displayHeatmap") {
+        d3.select("#main-vis-title").text("Heatmap of Cube Manipulation");
+        loadAndRenderHeatmap();
+    } else if (buttonId === "displayNotation") {
+        d3.select("#main-vis-title").text("Rubik's Cube Move Notation");
+        renderMoveNotation("#main-visualization-svg");
+    }
+}
+
+// Default option
+onButtonClick("displayTSNE");
+
+// Add button onclick event listeners to do that
+d3.select("#displayTSNE").on("click", () => onButtonClick("displayTSNE"));
+d3.select("#displayFreqSeq").on("click", () => onButtonClick("displayFreqSeq"));
+d3.select("#displayPhase").on("click", () => onButtonClick("displayPhase"));
+d3.select("#displayHeatmap").on("click", () => onButtonClick("displayHeatmap"));
+d3.select("#displayNotation").on("click", () => onButtonClick("displayNotation"));
+
+function loadAndRenderTSNE() {
+    // Get currently selected TSNE options
+    let selectedValue = d3.select("#tsne-select").node().value;
+    let selectedColoring = d3.select("#coloring-select").node().value;
+    let visualizationType = d3.select("#visualization-select").node().value;
+
+    let tsnePath;
     if (selectedValue === "50") {
         tsnePath = tsne_50_solutionsPath;
     } else if (selectedValue === "250") {
@@ -177,12 +202,7 @@ d3.select("#tsne-select").on("change", function () {
         tsnePath = tsne_1000_solutionsPath;
     }
 
-    // Get currently selected coloring
-    const selectedColoring = d3.select("#coloring-select").node().value;
-
-    // Get the currently selected visualization type
-    const visualizationType = d3.select("#visualization-select").node().value;
-
+    // Fetch and visualize data to main-visualization-svg
     d3.csv(tsnePath).then(data => {
         let minSolvedness = d3.min(data, d => +d.solvedness);
         const tsneData = data.map(d => ({
@@ -194,83 +214,74 @@ d3.select("#tsne-select").on("change", function () {
             faces: parseCubeState(d.state)
         }));
         if(visualizationType === "scatterplot") {
-            renderTSNE("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
+            renderTSNE("#main-visualization-svg", tsneData, selectedValue, selectedColoring);
         } else if (visualizationType === "voronoi") {
-            renderTSNEVoronoi("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
+            renderTSNEVoronoi("#main-visualization-svg", tsneData, selectedValue, selectedColoring);
         }
     });
-});
+}
 
-// Listen for when new coloring is selected
-d3.select("#coloring-select").on("change", function () {
-    selectedColoring = this.value;
+// tSNE changing options
+d3.select("#tsne-select").on("change", loadAndRenderTSNE);
+d3.select("#coloring-select").on("change", loadAndRenderTSNE);
+d3.select("#visualization-select").on("change", loadAndRenderTSNE);
 
-    // Get currently selected t-SNE data
-    const selectedValue = d3.select("#tsne-select").node().value;
-    let tsnePath = "";
-    if (selectedValue === "50") {
-        tsnePath = tsne_50_solutionsPath;
-    } else if (selectedValue === "250") {
-        tsnePath = tsne_250_solutionsPath;
-    } else if (selectedValue === "1000") {
-        tsnePath = tsne_1000_solutionsPath;
-    }   
-    
-    // Get the currently selected visualization type
-    const visualizationType = d3.select("#visualization-select").node().value;
+function loadAndRenderFreqSeq() {
+    // Fetch and visualize data
+    Promise.all([
+        d3.json(moveFrequencyPath),
+        d3.json(commonSequencesPath),
+    ]).then(([moveFrequencyData, commonSequencesData]) => {
+        const moveFrequency = moveFrequencyData["data"] || {};
+        const commonSequences = commonSequencesData["data"].reduce((acc, item) => {
+            acc[item.sequence.join(" ")] = item.count;
+            return acc;
+        }, {});
 
-    d3.csv(tsnePath).then(data => {
-        let minSolvedness = d3.min(data, d => +d.solvedness);
-        const tsneData = data.map(d => ({
-            x: +d.x,
-            y: +d.y,
-            solvedness: +d.solvedness,
-            norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-            phase: d.state.split(",")[d.state.split(",").length - 1][1],
-            faces: parseCubeState(d.state)
+        // Render charts
+        renderBarChart("#move-frequency-svg", moveFrequency, "Move", "Count");
+        renderBarChart("#common-sequences-svg", transformSequenceData(commonSequences), "Sequence", "Count", true);
+    });
+}
+
+function loadAndRenderPhaseAnalysis() {
+    // Fetch and visualize data
+    Promise.all([
+        d3.json(cfopDistributionPath),
+    ]).then(([cfopDistributionData]) => {
+        const cfopDistribution = Object.entries(cfopDistributionData["data"]).map(([phase, moves]) => ({
+            phase,
+            ...moves,
         }));
-        if(visualizationType === "scatterplot") {
-            renderTSNE("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
-        } else if (visualizationType === "voronoi") {
-            renderTSNEVoronoi("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
-        }
+        // Render charts
+        renderStackedBarChart("#cfop-phase-svg", cfopDistribution);
+        renderCFOPImages("#cfop-images")
     });
-});
+}
 
-// Listen for when tSNE visualization is changed (scatterplot, voronoi)
-d3.select("#visualization-select").on("change", function () {
-    let selectedVisiualization = this.value;
-    
-    // Get currently selected t-SNE data
-    let selectedValue = d3.select("#tsne-select").node().value;
-    let tsnePath = "";
-    if (selectedValue === "50") {
-        tsnePath = tsne_50_solutionsPath;
-    } else if (selectedValue === "250") {
-        tsnePath = tsne_250_solutionsPath;
-    } else if (selectedValue === "1000") {
-        tsnePath = tsne_1000_solutionsPath;
-    }   
+function loadAndRenderHeatmap() {
+    const checkedBoxes = d3.selectAll(".move-checkbox").nodes().filter(d => d.checked);
+    const selectedPhases = checkedBoxes.map(d => d.value);
 
-    let selectedColoring = d3.select("#coloring-select").node().value;
-
-    d3.csv(tsnePath).then(data => {
-        let minSolvedness = d3.min(data, d => +d.solvedness);
-        const tsneData = data.map(d => ({
-            x: +d.x,
-            y: +d.y,
-            solvedness: +d.solvedness,
-            norm_solvedness: (+d.solvedness - minSolvedness) / (1 - minSolvedness),
-            phase: d.state.split(",")[d.state.split(",").length - 1][1],
-            faces: parseCubeState(d.state)
-        }));
-        if(selectedVisiualization === "scatterplot") {
-            renderTSNE("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
-        } else if (selectedVisiualization === "voronoi") {
-            renderTSNEVoronoi("#tsne-plot-svg", tsneData, selectedValue, selectedColoring);
-        }
+    // convert selected phases to numbers: "cross" -> 1, "f2l" -> 2, etc.
+    const selectedPhasesNumbers = selectedPhases.map(phase => {
+        if (phase === "cross") return 1;
+        if (phase === "f2l") return 2;
+        if (phase === "oll") return 3;
+        if (phase === "pll") return 4;
     });
-});
+
+    d3.json(cubeHeatmapPath).then((data) => {
+        let allData = Array(54).fill(0)
+        selectedPhasesNumbers.forEach(phase => {
+            allData = allData.map((val, i) => val + data[phase][i]);
+        });
+        renderHeatmap("#main-visualization-svg", allData);
+    });
+}
+
+// Add event listener to checkboxes
+d3.selectAll(".move-checkbox").on("change", loadAndRenderHeatmap);
 
 // Render move notation images
 function renderMoveNotation(selector) {
@@ -304,11 +315,10 @@ function transformSequenceData(data) {
     return transformed;
 }
 
-
 // Render bar chart
 function renderBarChart(selector, data, xLabel, yLabel, isSequence = false) {
     d3.select(selector).selectAll("*").remove();
-    const svgWidth = 600; 
+    const svgWidth = 500; 
     const svgHeight = 400;
 
     const margin = { top: 20, right: 30, bottom: 80, left: 100 };
@@ -409,8 +419,8 @@ function renderBarChart(selector, data, xLabel, yLabel, isSequence = false) {
 function renderStackedBarChart(selector, data) {
     d3.select(selector).selectAll("*").remove();
 
-    const svgWidth = 600;
-    const svgHeight = 500;
+    const svgWidth = 450;
+    const svgHeight = 450;
 
     const margin = { top: 20, right: 150, bottom: 80, left: 100 }; // Adjust margin for legend
     const width = svgWidth - margin.left - margin.right;
@@ -579,8 +589,12 @@ function renderCFOPImages(selector) {
         }
     ];
 
+    // Remove any children of the container
+    d3.select(selector).selectAll("*").remove();
+
     const container = d3.select(selector).append("div").attr("class", "cfop-images");
 
+    
     cfopSteps.forEach((step) => {
         const stepContainer = container.append("div").attr("class", "phase-step");
         stepContainer.append("h5").text(step.step);
@@ -613,12 +627,6 @@ function renderCFOPImages(selector) {
 }
 
 function renderTSNE(selector, data, n_solutions, coloring="solvedness") {
-    const colorScheme = [
-        "#e36a5d", "#6590a6", "#85c17c", "#e6cf61", "#d69b5c", "#f4e4b8",
-        "#a86464", "#7ab3c4", "#5e7f93", "#c8b456", "#b8795a", "#f7e6ca",
-        "#c085c0", "#7ba2b3", "#71b367", "#f0b63f", "#ea8c5a", "#f3dcb0"
-    ];
-
     d3.select(selector).selectAll("*").remove();
 
     const svgWidth = 1200;
@@ -1106,48 +1114,6 @@ function renderTSNEVoronoi(selector, data, n_solutions, coloring) {
         });
     }
 }
-
-// Cube heatmap
-d3.json(cubeHeatmapPath).then((data) => {
-    // combine the data for all phases
-
-
-    allData = Array(54).fill(0);
-    for (let phase in data) {
-        allData = allData.map((val, i) => val + data[phase][i]);
-    }
-
-
-    // Render the cube heatmap
-    renderHeatmap("#move-heatmap-svg", allData);
-})
-
-// Event listeners for the move heatmap checkboxes
-// These determine which phases to count in the heatmap creation
-d3.selectAll(".move-checkbox").on("change", function () {
-    const checkedBoxes = d3.selectAll(".move-checkbox").nodes().filter(d => d.checked);
-    const selectedPhases = checkedBoxes.map(d => d.value);
-
-    // console.log(selectedPhases);
-
-    // convert selected phases to numbers: "cross" -> 1, "f2l" -> 2, etc.
-    const selectedPhasesNumbers = selectedPhases.map(phase => {
-        if (phase === "cross") return 1;
-        if (phase === "f2l") return 2;
-        if (phase === "oll") return 3;
-        if (phase === "pll") return 4;
-    });
-
-    // console.log(selectedPhasesNumbers)
-
-    d3.json(cubeHeatmapPath).then((data) => {
-        let allData = Array(54).fill(0)
-        selectedPhasesNumbers.forEach(phase => {
-            allData = allData.map((val, i) => val + data[phase][i]);
-        });
-        renderHeatmap("#move-heatmap-svg", allData);
-    })
-});
 
 function renderHeatmap(selector, data) {
     // Heatmap should show the cube layout and color each square according to the number of times it was changed

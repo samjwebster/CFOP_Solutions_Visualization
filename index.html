@@ -12,15 +12,46 @@
         
         <div id="vis-content">
             <div id="header" class="cell">
-                <h1>Rubik's Cube CFOP Solutions</h1>
-                <h2>Sam Webster and Tram Trinh</h2>
+                <h2>Rubik's Cube CFOP Solutions</h1>
+                <h3>Sam Webster and Tram Trinh</h2>
+                <div id="vis-selector" style="display: flex; flex-direction: row; justify-content: space-evenly; width: 75%; margin-top: 0.5em;">
+                    <button id="displayTSNE">Solutions<br>t-SNE</button>
+                    <button id="displayFreqSeq">Move Frequency<br>and Sequence Analysis</button>
+                    <button id="displayPhase">CFOP Phase<br>Analysis</button>
+                    <button id="displayHeatmap">Cube Manipulation<br>Heatmap</button>
+                    <button id="displayNotation">Move Notation<br>Reference</button>
+                </div>
             </div>
 
-            <section id="tsne-plot" class="cell">
-                <h3>2D t-SNE Plot of CFOP Solutions</h3>
-                <div id="tsne-plot-svg"></div>
+            <section id="main-visualization-container" class="cell">
+                <h4 id="main-vis-title" style="margin: 0.25em; padding: 0px;"></h4>
 
-                <div style="display: flex; flex-direction: flex-row;">
+                <div id="main-visualization-svg"></div>
+                
+                <div id="freq-seq-svgs" style="display: flex; border: none;" class="cell">
+                    <div class="charts-row">
+                        <div class="chart-container">
+                            <h4 style="padding: 0px; margin: 0px;">Move Distribution in 110,000 CFOP Solutions</h4>
+                            <div id="move-frequency-svg"></div>
+                        </div>
+                        <div class="chart-container">
+                            <h4 style="padding: 0px; margin: 0px;">Common Sequences in 110,000 CFOP Solutions</h4>
+                            <div id="common-sequences-svg"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="phase-svgs" style="display: flex; border: none;" class="cell">
+                    <div class="chart-and-images">
+                        <div class="chart-container">
+                            <h4 style="padding: 0px; margin: 0px;">Phase Distribution in 110,000 CFOP Solutions</h4>
+                            <div id="cfop-phase-svg"></div>
+                        </div>
+                        <div class="cfop-images" id="cfop-images"></div>
+                    </div>
+                </div>
+
+                <div id="tsne-options" style="display: flex; flex-direction: flex-row;">
                     <span style="margin-right: 10px;">Number of Solutions:</span> 
                     <select name="tsne-select" id="tsne-select">
                         <option value="50" checked=true>50</option>
@@ -38,46 +69,8 @@
                         <option value="voronoi">Voronoi Diagram</option>
                     </select>
                 </div>
-                
-            </section>
 
-            <section id="move-notation" class="cell">
-                <h3>Rubik's Cube Move Notation</h3>
-                <div id="move-images-section"></div>
-            </section>
-
-            <section id="chart-section" class="cell">
-                <h3>Move Frequency and Sequence Analysis</h3>
-                <div class="charts-row">
-                    <div class="chart-container">
-                        <h4>Move Distribution in 110,000 CFOP Solutions</h4>
-                        <div id="move-frequency-svg"></div>
-                    </div>
-                    <div class="chart-container">
-                        <h4>Common Sequences in 110,000 CFOP Solutions</h4>
-                        <div id="common-sequences-svg"></div>
-                    </div>
-                </div>
-            </section>
-            
-            <section id="cfop-distribution" class="cell">
-                <h3>CFOP Phase Analysis</h3>
-                <div class="chart-and-images">
-                    <div class="chart-container">
-                        <h4>Phase Distribution in 110,000 CFOP Solutions</h4>
-                        <div id="cfop-phase-svg"></div>
-                    </div>
-                    <div class="cfop-images" id="cfop-images"></div>
-                </div>
-            </section>
-                        
-
-            <section id="move-heatmap" class="cell">
-                <h3>Heatmap of Cube Manipulation</h3>
-                <div id="move-heatmap-svg"></div>
-
-                <!-- Phases Checkboxes -->
-                <div style="display: flex; flex-direction: row; justify-content: space-evenly; width: 75%;">
+                <div id="heatmap-options" style="display: flex; flex-direction: row; justify-content: space-evenly; width: 75%;">
                     <div>
                         <input class="move-checkbox" type="checkbox" id="cross-checkbox" name="cross" value="cross" checked=true>
                         <label for="cross">Cross</label>
@@ -95,11 +88,8 @@
                         <label for="pll">PLL</label>
                     </div>
                 </div>
-                
             </section>
-
         </div>
-        
     </body>
     <script src="js/background_animation.js"></script>
     <script src="js/main.js"></script>
